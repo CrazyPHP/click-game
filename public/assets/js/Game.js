@@ -193,12 +193,16 @@ class Game {
      */
     getRandomEnemy(enemyList = []) {
         let enemy = randomProp(enemyList);
-        if(enemy.name !== currentEnemy.info.name) {
+        if (Object.keys(currentEnemy.info).length === 0) {
+            return enemy;
+        }
+        if (enemy.name !== currentEnemy.info.name) {
             return enemy;
         } else {
             return this.getRandomEnemy(enemyList);
         }
     }
+
     /**
      * Hit enemy by click or tick
      * @param type click|tick
@@ -226,9 +230,9 @@ class Game {
         }
         // money for click
         if (type === 'click') {
-            let lvl = this.user.level/2.5;
-            let x = lvl-4;
-            let sigmoid = 1-(1 / (1 + Math.exp(-x)));
+            let lvl = this.user.level / 2.5;
+            let x = lvl - 4;
+            let sigmoid = 1 - (1 / (1 + Math.exp(-x)));
             this.user.usd += this.calcCurrentClickPower() * (this.clickUsdBonus * sigmoid);
             console.log(sigmoid);
         }
