@@ -365,6 +365,10 @@ let enemyList = {
         img: 'assets/img/enemy/orange_head.gif',
         name: 'The Orange',
     },
+    biden: {
+        img: 'assets/img/enemy/biden.png',
+        name: 'Biden',
+    },
 };
 
 let bossList = {
