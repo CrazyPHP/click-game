@@ -4,6 +4,9 @@ class Game {
         this.allHeroPower = 0;
         this.bonusChance = 1; // default value can be lifted in percents
         this.usdGain = 0; // all usd bonuses summ 0.5 = 50%
+        this.clickGain = 0; // click power bonus
+        this.allPowerToClickBonus = 0.01; // 1% of all power goes to click power
+        this.clickUsdBonus = 0.05; // 5% of click power goes to USD by sigmoid function
 
         // start game
         this.user = user;
@@ -58,20 +61,25 @@ class Game {
     createHeroFromTemplate(hero) {
         // all power
         let hero_power = hero.power;
-        if (hero.key !== 'kitty_click') {
-            // effects of that hero
-            for (let key in hero.effects) {
-                if (this.user.heroes[hero.key].effects[key].active === true) {
-                    // gain hero power
-                    if (hero.effects[key].type === 'hero_power') {
-                        hero_power += hero_power * hero.effects[key].amount;
-                    }
-                    // gain usd
-                    if (hero.effects[key].type === 'usd_gain') {
-                        this.usdGain += hero.effects[key].amount;
-                    }
+        // effects of that hero
+        for (let key in hero.effects) {
+            if (this.user.heroes[hero.key].effects[key].active === true) {
+                // gain click power
+                if (hero.effects[key].type === 'click_power') {
+                    hero_power += hero_power * hero.effects[key].amount;
+                    this.clickGain += hero.effects[key].amount;
+                }
+                // gain hero power
+                if (hero.effects[key].type === 'hero_power') {
+                    hero_power += hero_power * hero.effects[key].amount;
+                }
+                // gain usd
+                if (hero.effects[key].type === 'usd_gain') {
+                    this.usdGain += hero.effects[key].amount;
                 }
             }
+        }
+        if (hero.key !== 'kitty_click') {
             // summ
             this.allHeroPower += hero_power * this.user.heroes[hero.key].count;
         }
@@ -218,7 +226,11 @@ class Game {
         }
         // money for click
         if (type === 'click') {
-            this.user.usd += this.calcCurrentClickPower() * 0.1;
+            let lvl = this.user.level/2.5;
+            let x = lvl-4;
+            let sigmoid = 1-(1 / (1 + Math.exp(-x)));
+            this.user.usd += this.calcCurrentClickPower() * (this.clickUsdBonus * sigmoid);
+            console.log(sigmoid);
         }
         this.updateUser();
     }
@@ -266,12 +278,8 @@ class Game {
      * @returns {number}
      */
     calcCurrentClickPower() {
-        let kitty_power = heroList.kitty_click.power * this.user.heroes.kitty_click.count;
-        let power = parseFloat((1 + (this.allHeroPower * 0.01) + kitty_power).toFixed(1));
-        // effects
-        if (this.user.heroes.kitty_click.effects.yummy_snack.active) {
-            power = power + (power * this.user.heroes.kitty_click.effects.yummy_snack.amount);
-        }
+        let kitty_power = (heroList.kitty_click.power + (heroList.kitty_click.power * this.clickGain)) * this.user.heroes.kitty_click.count;
+        let power = parseFloat((1 + (this.allHeroPower * this.allPowerToClickBonus) + kitty_power).toFixed(1));
         return power;
     }
 
@@ -412,6 +420,17 @@ let heroList = {
                 price: 25,
                 active: false,
                 count_req: 5,
+            },
+            cat_collar: {
+                key: 'cat_collar',
+                name: 'Cat Collar',
+                info: '+150% to click power',
+                type: 'click_power',
+                amount: 1.5,
+                img: 'assets/img/effects/cat_collar.png',
+                price: 150,
+                active: false,
+                count_req: 15,
             }
         }
     },
