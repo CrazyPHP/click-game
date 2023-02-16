@@ -36,16 +36,30 @@ body {
     width: 52px;
 }
 .top .body .char-menu .hero-item .info {
-    width: 280px;
+    width: 230px;
     float: left;
     margin-left: 5px;
 }
+.top .body .char-menu .hero-item .info .effect-btn {
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    position: relative;
+    display: inline-block;
+}
+.top .body .char-menu .hero-item .info .effect-btn.active {
+    cursor: inherit;
+    background-color: #37a21b;
+    opacity: 0.3;
+}
+
 .top .body .char-menu .hero-item .action {
     float: right;
 }
 .top .body .char-menu .hero-item.template {
     display: none;
 }
+
 
 .top .body .game-canvas {
     width: 878px;

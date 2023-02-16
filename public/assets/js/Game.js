@@ -2,6 +2,7 @@ class Game {
     constructor(user) {
         // game current vars
         this.allHeroPower = 0;
+        this.bonusChance = 1; // default value can be lifted in percents
 
         // start game
         this.user = user;
@@ -55,16 +56,51 @@ class Game {
         let add_hero = document.querySelector('.top .body .char-menu .hero-item.template').cloneNode(true);
         add_hero.classList.remove('template');
         add_hero.querySelector('.icon img').src = hero.img;
-        let power_multi = this.user.heroes[hero.key].count === 0 ? 1 : this.user.heroes[hero.key].count;
-        add_hero.querySelector('.info').innerHTML = hero.name + ', power: ' + (hero.power * power_multi) + ' [' + this.user.heroes[hero.key].count + ']';
+        add_hero.querySelector('.info').innerHTML = hero.name + ' + ' + hero.power + ' power! <br> All power: ' + (hero.power * this.user.heroes[hero.key].count) + ', count: x' + this.user.heroes[hero.key].count + '<div class="effects"></div>';
         add_hero.querySelector('.action .btnBuy .price').innerHTML = hero.price * (this.user.heroes[hero.key].count + 1);
         add_hero.querySelector('.action .btnBuy').addEventListener('click', function () {
             window.game.buyHero(hero);
         });
         document.querySelector('.top .body .char-menu').append(add_hero);
+        // effects
+        for (let key in hero.effects) {
+            let ef_btn = this.createEffectBtn(hero, hero.effects[key]);
+            add_hero.querySelector('.info .effects').append(ef_btn);
+        }
         // all power
         if (hero.key !== 'kitty_click') {
             this.allHeroPower += hero.power * this.user.heroes[hero.key].count;
+        }
+    }
+
+    createEffectBtn(hero, effect) {
+        let is_active = this.user.heroes[hero.key].effects[effect.key].active;
+        let ef_btn = document.createElement('img');
+        ef_btn.classList.add('effect-btn');
+        ef_btn.src = effect.img;
+        ef_btn.title = effect.price + ' USD -> ' + effect.name + ': ' + effect.info;
+        if (is_active) {
+            ef_btn.classList.add('active');
+        } else {
+            ef_btn.addEventListener('click', function () {
+                window.game.buyEffect(hero.key, effect.key);
+            });
+        }
+        return ef_btn;
+    }
+
+    /**
+     * Buy effect only if we have atleast 1 hero
+     * @param hero_key
+     * @param effect_key
+     */
+    buyEffect(hero_key, effect_key) {
+        if (this.user.heroes[hero_key].count > 0 && this.user.usd >= this.user.heroes[hero_key].effects[effect_key].price && this.user.heroes[hero_key].effects[effect_key].active === false) {
+            this.user.heroes[hero_key].effects[effect_key].active = true;
+            this.user.usd -= parseFloat(this.user.heroes[hero_key].effects[effect_key].price.toFixed(2));
+            this.updateUser();
+            this.initHeroes();
+            saveThisUser(this.user);
         }
     }
 
@@ -83,6 +119,10 @@ class Game {
         this.hitEnemy('tick');
     }
 
+    /**
+     * Spawn particular enemy
+     * @param type enemy|boss|bonus
+     */
     spawnEnemy(type = 'enemy') {
         let enemy = null;
         let hp = 10;
@@ -147,7 +187,7 @@ class Game {
         document.querySelector('.top .head .user-info .name').innerHTML = this.user.name;
         document.querySelector('.top .head .user-info .usd').innerHTML = parseFloat(this.user.usd).toFixed(2);
         document.querySelector('.top .head .user-info .all-power').innerHTML = this.allHeroPower;
-        document.querySelector('.top .head .user-info .click-power').innerHTML = this.calcCurrentClickPower().toString();
+        document.querySelector('.top .head .user-info .click-power').innerHTML = this.calcCurrentClickPower().toFixed(2);
     }
 
     /**
@@ -167,7 +207,13 @@ class Game {
         if (this.user.sub_level >= 10) {
             this.spawnEnemy('boss');
         } else {
-            this.spawnEnemy();
+            // calculate bonus enemy
+            let bonus_rand = getRandomArbitrary(0, 100);
+            if (bonus_rand <= this.calcBonusChance()) {
+                this.spawnEnemy('bonus');
+            } else {
+                this.spawnEnemy('enemy');
+            }
         }
         // save user progress
         saveThisUser(this.user);
@@ -179,7 +225,20 @@ class Game {
      */
     calcCurrentClickPower() {
         let kitty_power = heroList.kitty_click.power * this.user.heroes.kitty_click.count;
-        return parseFloat((1 + (this.allHeroPower * 0.01) + kitty_power).toFixed(1));
+        let power = parseFloat((1 + (this.allHeroPower * 0.01) + kitty_power).toFixed(1));
+        // effects
+        if (this.user.heroes.kitty_click.effects.yummy_snack.active) {
+            power = power + (power * this.user.heroes.kitty_click.effects.yummy_snack.amount);
+        }
+        return power;
+    }
+
+    /**
+     * Calculate bonus enemy chance
+     * @returns {number}
+     */
+    calcBonusChance() {
+        return this.bonusChance;
     }
 
     generateRandomUsdLoot(type = 'enemy') {
@@ -219,6 +278,42 @@ let enemyList = {
         img: 'assets/img/enemy/hardbass_man.webp',
         name: 'Hardbass Pivas',
     },
+    broken_cat: {
+        img: 'assets/img/enemy/broken_cat.png',
+        name: 'Broken Cat',
+    },
+    primitive_sponge: {
+        img: 'assets/img/enemy/primitive_sponge.png',
+        name: 'Primitive Sponge',
+    },
+    coba_dragon_lol: {
+        img: 'assets/img/enemy/coba_dragon_lol.png',
+        name: 'Kanna The Loli Dragon',
+    },
+    spongebob_mocking: {
+        img: 'assets/img/enemy/spongebob_mocking.png',
+        name: 'Spongebob Mocking',
+    },
+    bob_celestia: {
+        img: 'assets/img/enemy/bob_celestia.png',
+        name: 'Bob Celestia',
+    },
+    the_head: {
+        img: 'assets/img/enemy/the_head.png',
+        name: 'The Head',
+    },
+    mad_dog: {
+        img: 'assets/img/enemy/mad_dog.png',
+        name: 'Mad Dog',
+    },
+    princess_head: {
+        img: 'assets/img/enemy/princess_head.gif',
+        name: 'The Princess Head',
+    },
+    orange_head: {
+        img: 'assets/img/enemy/orange_head.gif',
+        name: 'The Orange',
+    },
 };
 
 let bossList = {
@@ -230,9 +325,26 @@ let bossList = {
         img: 'assets/img/boss/fluttershy_boss.webp',
         name: 'Fluttershy Boss Pony',
     },
+    sandy_build: {
+        img: 'assets/img/boss/sandy_build.png',
+        name: 'Sandy Bouncer',
+    },
+    pepe_strike: {
+        img: 'assets/img/boss/pepe_strike.png',
+        name: 'Pepe Punch',
+    },
+    thanos_froggo: {
+        img: 'assets/img/boss/thanos_froggo.webp',
+        name: 'Thanos Froggo',
+    },
 };
 
-let bonusList = {};
+let bonusList = {
+    golden_crap: {
+        img: 'assets/img/bonus/golden_crap.png',
+        name: 'Golden crap',
+    },
+};
 
 let heroList = {
     kitty_click: {
@@ -243,6 +355,18 @@ let heroList = {
         power: 1,
         count: 0,
         price: 5,
+        effects: {
+            yummy_snack: {
+                key: 'yummy_snack',
+                name: 'Yummy snack',
+                info: '+50% to click power',
+                type: 'click_power',
+                amount: 0.5,
+                img: 'assets/img/effects/yummy_snack.png',
+                price: 25,
+                active: false,
+            }
+        }
     },
     borat_swim: {
         key: 'borat_swim',
@@ -252,6 +376,7 @@ let heroList = {
         power: 3,
         count: 0,
         price: 20,
+        effects: {},
     },
     lizard_trident: {
         key: 'lizard_trident',
@@ -261,6 +386,7 @@ let heroList = {
         power: 10,
         count: 0,
         price: 100,
+        effects: {},
     },
     twderp_blurp: {
         key: 'twderp_blurp',
@@ -270,15 +396,17 @@ let heroList = {
         power: 50,
         count: 0,
         price: 1000,
+        effects: {},
     },
     scary_tel: {
         key: 'scary_tel',
         index: 5,
-        img: 'assets/img/hero/scary_tel.webp',
+        img: 'assets/img/hero/scary_tel.png',
         name: 'Funny Scream',
         power: 250,
         count: 0,
         price: 10000,
+        effects: {},
     },
 };
 
