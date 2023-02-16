@@ -199,6 +199,7 @@ class Game {
             return this.getRandomEnemy(enemyList);
         }
     }
+
     /**
      * Hit enemy by click or tick
      * @param type click|tick
