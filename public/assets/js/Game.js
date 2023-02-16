@@ -53,10 +53,24 @@ class Game {
     }
 
     createHeroFromTemplate(hero) {
+        // all power
+        let hero_power = hero.power;
+        if (hero.key !== 'kitty_click') {
+            // effects of that hero
+            for (let key in hero.effects) {
+                if (this.user.heroes[hero.key].effects[key].active === true) {
+                    if (hero.effects[key].type === 'hero_power') {
+                        hero_power += hero_power * hero.effects[key].amount;
+                    }
+                }
+            }
+            // summ
+            this.allHeroPower += hero_power * this.user.heroes[hero.key].count;
+        }
         let add_hero = document.querySelector('.top .body .char-menu .hero-item.template').cloneNode(true);
         add_hero.classList.remove('template');
         add_hero.querySelector('.icon img').src = hero.img;
-        add_hero.querySelector('.info').innerHTML = hero.name + ' + ' + hero.power + ' power! <br> All power: ' + (hero.power * this.user.heroes[hero.key].count) + ', count: x' + this.user.heroes[hero.key].count + '<div class="effects"></div>';
+        add_hero.querySelector('.info').innerHTML = hero.name + ' + ' + hero_power + ' power! <br> All power: ' + (hero_power * this.user.heroes[hero.key].count) + ', count: x' + this.user.heroes[hero.key].count + '<div class="effects"></div>';
         add_hero.querySelector('.action .btnBuy .price').innerHTML = hero.price * (this.user.heroes[hero.key].count + 1);
         add_hero.querySelector('.action .btnBuy').addEventListener('click', function () {
             window.game.buyHero(hero);
@@ -66,10 +80,6 @@ class Game {
         for (let key in hero.effects) {
             let ef_btn = this.createEffectBtn(hero, hero.effects[key]);
             add_hero.querySelector('.info .effects').append(ef_btn);
-        }
-        // all power
-        if (hero.key !== 'kitty_click') {
-            this.allHeroPower += hero.power * this.user.heroes[hero.key].count;
         }
     }
 
@@ -145,8 +155,12 @@ class Game {
         currentEnemy.hp = hp;
         currentEnemy.usd = this.generateRandomUsdLoot(type);
         // set to canvas
-        let levelText = '[' + this.user.sub_level + '/10 - <b>' + this.user.level + '</b>] ';
-        document.querySelector('.top .body .game-canvas .enemy-name').innerHTML = levelText + currentEnemy.info.name;
+        let levelText = '[' + this.user.sub_level + '/10 of level <b>' + this.user.level + '</b>] ';
+        let boss_text = '';
+        if (type === 'boss') {
+            boss_text = ' <b>BOSS!!!</b>';
+        }
+        document.querySelector('.top .body .game-canvas .enemy-name').innerHTML = levelText + currentEnemy.info.name + boss_text;
         document.querySelector('.top .body .game-canvas .enemy-img img').src = currentEnemy.info.img;
         document.querySelector('.top .body .game-canvas .enemy-hp').style.width = '100%';
     }
@@ -376,7 +390,18 @@ let heroList = {
         power: 3,
         count: 0,
         price: 20,
-        effects: {},
+        effects: {
+            anal_plug: {
+                key: 'anal_plug',
+                name: 'Anal Plug',
+                info: '+100% to hero power',
+                type: 'hero_power',
+                amount: 1,
+                img: 'assets/img/effects/anal_plug.png',
+                price: 1000,
+                active: false,
+            }
+        },
     },
     lizard_trident: {
         key: 'lizard_trident',
