@@ -150,16 +150,16 @@ class Game {
         let enemy = null;
         let hp = 10;
         if (type === 'enemy') {
-            enemy = randomProp(enemyList);
+            enemy = this.getRandomEnemy(enemyList);
             hp = this.user.level * hp;
         } else if (type === 'boss') {
-            enemy = randomProp(bossList);
+            enemy = this.getRandomEnemy(bossList);
             hp = this.user.level * hp * 10;
         } else if (type === 'bonus') {
-            enemy = randomProp(bonusList);
+            enemy = this.getRandomEnemy(bonusList);
             hp = this.user.level * hp;
         } else {
-            enemy = randomProp(enemyList);
+            enemy = this.getRandomEnemy(enemyList);
         }
         // random enemy
         currentEnemy.type = type;
@@ -178,6 +178,19 @@ class Game {
         document.querySelector('.top .body .game-canvas .enemy-hp').style.width = '100%';
     }
 
+    /**
+     * returning enemy with check for not double
+     * @param enemyList
+     * @returns {*}
+     */
+    getRandomEnemy(enemyList = []) {
+        let enemy = randomProp(enemyList);
+        if(enemy.name !== currentEnemy.info.name) {
+            return enemy;
+        } else {
+            return this.getRandomEnemy(enemyList);
+        }
+    }
     /**
      * Hit enemy by click or tick
      * @param type click|tick
