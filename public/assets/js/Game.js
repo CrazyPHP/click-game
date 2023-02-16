@@ -3,6 +3,7 @@ class Game {
         // game current vars
         this.allHeroPower = 0;
         this.bonusChance = 1; // default value can be lifted in percents
+        this.usdGain = 0; // all usd bonuses summ 0.5 = 50%
 
         // start game
         this.user = user;
@@ -33,6 +34,8 @@ class Game {
      * Add all heroes to menu and calculate all power
      */
     initHeroes() {
+        this.bonusChance = 1;
+        this.usdGain = 0;
         this.allHeroPower = 0;
         let m_items = document.querySelectorAll('.top .body .char-menu .hero-item:not(.template)');
         for (const elem of m_items) {
@@ -59,8 +62,13 @@ class Game {
             // effects of that hero
             for (let key in hero.effects) {
                 if (this.user.heroes[hero.key].effects[key].active === true) {
+                    // gain hero power
                     if (hero.effects[key].type === 'hero_power') {
                         hero_power += hero_power * hero.effects[key].amount;
+                    }
+                    // gain usd
+                    if (hero.effects[key].type === 'usd_gain') {
+                        this.usdGain += hero.effects[key].amount;
                     }
                 }
             }
@@ -88,7 +96,7 @@ class Game {
         let ef_btn = document.createElement('img');
         ef_btn.classList.add('effect-btn');
         ef_btn.src = effect.img;
-        ef_btn.title = effect.price + ' USD -> ' + effect.name + ': ' + effect.info;
+        ef_btn.title = effect.price + ' USD & ' + effect.count_req + ' ptc -> ' + effect.name + ': ' + effect.info;
         if (is_active) {
             ef_btn.classList.add('active');
         } else {
@@ -105,7 +113,12 @@ class Game {
      * @param effect_key
      */
     buyEffect(hero_key, effect_key) {
-        if (this.user.heroes[hero_key].count > 0 && this.user.usd >= this.user.heroes[hero_key].effects[effect_key].price && this.user.heroes[hero_key].effects[effect_key].active === false) {
+        if (
+            this.user.heroes[hero_key].count > 0 &&
+            this.user.usd >= this.user.heroes[hero_key].effects[effect_key].price &&
+            this.user.heroes[hero_key].effects[effect_key].active === false &&
+            this.user.heroes[hero_key].count >= this.user.heroes[hero_key].effects[effect_key].count_req
+        ) {
             this.user.heroes[hero_key].effects[effect_key].active = true;
             this.user.usd -= parseFloat(this.user.heroes[hero_key].effects[effect_key].price.toFixed(2));
             this.updateUser();
@@ -202,6 +215,8 @@ class Game {
         document.querySelector('.top .head .user-info .usd').innerHTML = parseFloat(this.user.usd).toFixed(2);
         document.querySelector('.top .head .user-info .all-power').innerHTML = this.allHeroPower;
         document.querySelector('.top .head .user-info .click-power').innerHTML = this.calcCurrentClickPower().toFixed(2);
+        // to console
+        //console.log('usdGain: ' + this.usdGain.toFixed(2));
     }
 
     /**
@@ -214,7 +229,7 @@ class Game {
             this.user.level++;
         }
         // money, stats, spawn enemy
-        this.user.usd += parseFloat(currentEnemy.usd);
+        this.user.usd += (parseFloat(currentEnemy.usd) + (parseFloat(currentEnemy.usd) * this.usdGain));
         this.user.kill_count++;
         // level count
         this.user.sub_level++;
@@ -379,6 +394,7 @@ let heroList = {
                 img: 'assets/img/effects/yummy_snack.png',
                 price: 25,
                 active: false,
+                count_req: 5,
             }
         }
     },
@@ -400,6 +416,29 @@ let heroList = {
                 img: 'assets/img/effects/anal_plug.png',
                 price: 1000,
                 active: false,
+                count_req: 5,
+            },
+            bikini: {
+                key: 'bikini',
+                name: 'Bikini for Borat',
+                info: '+100% to hero power',
+                type: 'hero_power',
+                amount: 1,
+                img: 'assets/img/effects/bikini.png',
+                price: 5000,
+                active: false,
+                count_req: 15,
+            },
+            magic_wand_vibro: {
+                key: 'magic_wand_vibro',
+                name: 'Magic Wand Vibro',
+                info: '+150% to hero power',
+                type: 'hero_power',
+                amount: 1.5,
+                img: 'assets/img/effects/magic_wand_vibro.png',
+                price: 15000,
+                active: false,
+                count_req: 25,
             }
         },
     },
@@ -411,7 +450,52 @@ let heroList = {
         power: 10,
         count: 0,
         price: 100,
-        effects: {},
+        effects: {
+            dirty_money: {
+                key: 'dirty_money',
+                name: 'Dirty Money',
+                info: '+25% to all USD',
+                type: 'usd_gain',
+                amount: 0.25,
+                img: 'assets/img/effects/dirty_money.png',
+                price: 5000,
+                active: false,
+                count_req: 5,
+            },
+            golden_apple: {
+                key: 'golden_apple',
+                name: 'Golden Apple',
+                info: '+50% to all USD',
+                type: 'usd_gain',
+                amount: 0.5,
+                img: 'assets/img/effects/golden_apple.png',
+                price: 15000,
+                active: false,
+                count_req: 15,
+            },
+            golden_dollar: {
+                key: 'golden_dollar',
+                name: 'Golden Dollar',
+                info: '+100% to all USD',
+                type: 'usd_gain',
+                amount: 1,
+                img: 'assets/img/effects/golden_dollar.png',
+                price: 30000,
+                active: false,
+                count_req: 25,
+            },
+            golden_trophy: {
+                key: 'golden_trophy',
+                name: 'Golden Trophy',
+                info: '+200% to all USD',
+                type: 'usd_gain',
+                amount: 2,
+                img: 'assets/img/effects/golden_trophy.png',
+                price: 100000,
+                active: false,
+                count_req: 50,
+            }
+        },
     },
     twderp_blurp: {
         key: 'twderp_blurp',
@@ -421,7 +505,19 @@ let heroList = {
         power: 50,
         count: 0,
         price: 1000,
-        effects: {},
+        effects: {
+            magic_book: {
+                key: 'magic_book',
+                name: 'Magic Book',
+                info: '+100% to hero power',
+                type: 'hero_power',
+                amount: 1,
+                img: 'assets/img/effects/magic_book.png',
+                price: 50000,
+                active: false,
+                count_req: 5,
+            }
+        },
     },
     scary_tel: {
         key: 'scary_tel',
@@ -431,7 +527,19 @@ let heroList = {
         power: 250,
         count: 0,
         price: 10000,
-        effects: {},
+        effects: {
+            pizza: {
+                key: 'pizza',
+                name: 'Pizza',
+                info: '+100% to hero power',
+                type: 'hero_power',
+                amount: 1,
+                img: 'assets/img/effects/pizza.png',
+                price: 150000,
+                active: false,
+                count_req: 5,
+            }
+        },
     },
 };
 
