@@ -320,6 +320,11 @@ let enemyList = {
         img: 'assets/img/enemy/bydlonavt.png',
         name: 'Bydlonavt',
     },
+    twins_atomic: {
+        img: 'assets/img/enemy/twins_atomic.png',
+        name: 'Sult twins',
+    },
+
     terror_pepe: {
         img: 'assets/img/enemy/terror_pepe.png',
         name: 'Terror Pepe',
