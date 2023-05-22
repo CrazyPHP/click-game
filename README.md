@@ -1,1 +1,1 @@
-Just download and open index.html with Chrome.
+Just download project in zip archive and open index.html with Chrome.
